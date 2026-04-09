@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Dashboard - Online Banking</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f9f4; margin: 0; padding: 0; }
+        .navbar { background-color: #0056b3; padding: 15px; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .navbar-brand { font-size: 1.2em; font-weight: bold; }
+        .navbar-links a { color: white; text-decoration: none; padding: 10px; font-weight: bold; margin-left: 10px; }
+        .navbar-links a:hover { background-color: #004494; border-radius: 5px; }
+        .container { width: 85%; margin: 30px auto; }
+        .row { display: flex; gap: 20px; }
+        .col-left { flex: 1; }
+        .col-right { flex: 2; }
+        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 20px; border-top: 5px solid #2e8b57; }
+        h2 { color: #0056b3; margin-top: 0;}
+        h3 { color: #2e8b57; margin-top: 0;}
+        .balance-text { font-size: 36px; font-weight: bold; color: #333; margin: 10px 0;}
+        .account-details { font-size: 16px; color: #555; }
+        .alert-error { color: #721c24; background-color: #f8d7da; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
+        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px;}
+        .btn { padding: 12px; background-color: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; text-decoration: none; text-align: center;}
+        .btn:hover { background-color: #004494; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table, th, td { border: 1px solid #ddd; }
+        th, td { padding: 12px; text-align: left; }
+        th { background-color: #2e8b57; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .pos { color: green; font-weight: bold; }
+        .neg { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-brand">TrustBank</div>
+        <div class="navbar-links">
+            <span th:text="'Hello, ' + ${customer.name}"></span>
+            <a th:href="@{/customer/dashboard}">Dashboard</a>
+            <a th:href="@{/customer/transactions}">Transactions</a>
+            <a th:href="@{/logout}" style="background-color: #dc3545; border-radius: 5px;">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div th:if="${error}" class="alert-error" th:text="${error}"></div>
+        
+        <h2>Welcome to Your Dashboard</h2>
+        
+        <div class="row">
+            <div class="col-left">
+                <!-- Accounts Loop -->
+                <div th:each="account : ${accounts}" class="card">
+                    <h3>Account Balance</h3>
+                    <div class="account-details" th:text="${account.accountType} + ' Account - ' + ${account.accountNumber}"></div>
+                    <div class="balance-text" th:text="'$' + ${#numbers.formatDecimal(account.balance, 1, 2)}"></div>
+                </div>
+
+                <div class="card">
+                    <h3>Quick Actions</h3>
+                    <div class="btn-group">
+                        <a th:href="@{/customer/deposit}" class="btn">Deposit Funds</a>
+                        <a th:href="@{/customer/withdraw}" class="btn">Withdraw Funds</a>
+                        <a th:href="@{/customer/transfer}" class="btn">Transfer Funds</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-right">
+                <div class="card" style="border-top-color: #0056b3;">
+                    <h3>Recent Transactions</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="txn : ${recentTransactions}">
+                                <td th:text="${#temporals.format(txn.date, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td th:text="${txn.type}"></td>
+                                <td>
+                                    <span th:class="${txn.type == 'DEPOSIT' or txn.type == 'TRANSFER_IN'} ? 'pos' : 'neg'"
+                                          th:text="(${txn.type == 'DEPOSIT' or txn.type == 'TRANSFER_IN'} ? '+' : '-') + '$' + ${#numbers.formatDecimal(txn.amount, 1, 2)}">
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(recentTransactions)}">
+                                <td colspan="3" style="text-align: center;">No recent transactions found.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="text-align: right; margin-top: 15px;">
+                        <a th:href="@{/customer/transactions}" style="color: #0056b3; font-weight: bold; text-decoration: none;">View All Transactions &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

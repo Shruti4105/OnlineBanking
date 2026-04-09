@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Transaction History - Online Banking</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f9f4; margin: 0; padding: 0; }
+        .navbar { background-color: #0056b3; padding: 15px; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .navbar-brand { font-size: 1.2em; font-weight: bold; }
+        .navbar-links a { color: white; text-decoration: none; padding: 10px; font-weight: bold; margin-left: 10px; }
+        .navbar-links a:hover { background-color: #004494; border-radius: 5px; }
+        .container { width: 90%; margin: 30px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { color: #0056b3; border-bottom: 2px solid #2e8b57; padding-bottom: 10px;}
+        
+        .filters { margin-bottom: 20px; padding: 15px; background-color: #e2f3e5; border-radius: 5px; border: 1px solid #c3e6cb; display: flex; gap: 15px; align-items: center;}
+        .filters input, .filters select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-filter { padding: 8px 15px; background-color: #2e8b57; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-filter:hover { background-color: #246d44; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table, th, td { border: 1px solid #ddd; }
+        th, td { padding: 12px; text-align: left; }
+        th { background-color: #0056b3; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .pos { color: green; font-weight: bold; }
+        .neg { color: red; font-weight: bold; }
+    </style>
+    <!-- Simple JS to handle Search/Filtering as JS frameworks are not allowed but vanilla is fine for local table filter -->
+    <script>
+        function filterTable() {
+            var inputType = document.getElementById("filterType").value.toUpperCase();
+            var inputDate = document.getElementById("filterDate").value;
+            
+            var table = document.getElementById("txnTable");
+            var tr = table.getElementsByTagName("tr");
+
+            for (var i = 1; i < tr.length; i++) {
+                var tdType = tr[i].getElementsByTagName("td")[2];
+                var tdDate = tr[i].getElementsByTagName("td")[1].innerText.substr(0,10);
+                
+                if (tdType) {
+                    var txtValueType = tdType.textContent || tdType.innerText;
+                    
+                    var matchType = (inputType === "ALL" || txtValueType.toUpperCase().indexOf(inputType) > -1);
+                    var matchDate = (inputDate === "" || tdDate === inputDate);
+
+                    if (matchType && matchDate) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }       
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-brand">TrustBank</div>
+        <div class="navbar-links">
+            <a th:href="@{/customer/dashboard}">Dashboard</a>
+            <a th:href="@{/customer/transactions}" style="text-decoration: underline;">Transactions</a>
+            <a th:href="@{/logout}" style="background-color: #dc3545; border-radius: 5px;">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Account Transaction History</h2>
+        
+        <div class="filters">
+            <strong>Filter Results:</strong>
+            <select id="filterType" onchange="filterTable()">
+                <option value="ALL">All Types</option>
+                <option value="DEPOSIT">Deposit</option>
+                <option value="WITHDRAW">Withdraw</option>
+                <option value="TRANSFER_IN">Transfer In</option>
+                <option value="TRANSFER_OUT">Transfer Out</option>
+            </select>
+            <input type="date" id="filterDate" onchange="filterTable()">
+            <button class="btn-filter" onclick="document.getElementById('filterType').value='ALL'; document.getElementById('filterDate').value=''; filterTable();">Clear Filters</button>
+        </div>
+
+        <table id="txnTable">
+            <thead>
+                <tr>
+                    <th>Ref ID</th>
+                    <th>Date & Time</th>
+                    <th>Type</th>
+                    <th>Account</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="txn : ${transactions}">
+                    <td th:text="'TXN' + ${txn.transactionId}"></td>
+                    <td th:text="${#temporals.format(txn.date, 'yyyy-MM-dd HH:mm')}"></td>
+                    <td th:text="${txn.type}"></td>
+                    <td th:text="${txn.accountNumber}"></td>
+                    <td>
+                        <span th:class="${txn.type == 'DEPOSIT' or txn.type == 'TRANSFER_IN'} ? 'pos' : 'neg'"
+                              th:text="(${txn.type == 'DEPOSIT' or txn.type == 'TRANSFER_IN'} ? '+' : '-') + '$' + ${#numbers.formatDecimal(txn.amount, 1, 2)}">
+                        </span>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(transactions)}">
+                    <td colspan="5" style="text-align: center;">No transactions found for this account.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
